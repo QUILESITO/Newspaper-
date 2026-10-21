@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1e293b"><link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes">
+<title>Contraste</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#0f172a;--mut:#64748b;--bd:#e2e8f0;--ac:#1e293b;--acx:#fff;--L:#7c3aed;--C:#94a3b8;--R:#d97706;--warn:#fef3c7;--warnx:#78350f}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0b1220;--card:#131c2e;--tx:#e5e9f0;--mut:#94a3b8;--bd:#24304a;--ac:#e5e9f0;--acx:#0b1220;--L:#a78bfa;--C:#64748b;--R:#f59e0b;--warn:#3b2f0b;--warnx:#fde68a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.wrap{max-width:640px;margin:0 auto;padding:12px 14px 40px}header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+h1{font-size:22px;margin:4px 0}.sub,.foot{font-size:12px;color:var(--mut)}button{font:inherit;cursor:pointer}
+.btn{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:999px;padding:7px 12px;font-size:14px;white-space:nowrap}.btn.on{background:var(--ac);color:var(--acx);border-color:var(--ac)}
+.tabs{display:flex;gap:6px;margin:10px 0;overflow-x:auto}.bar{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mut);margin:6px 2px 10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:13px;margin-bottom:10px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--mut);margin-bottom:5px}.tag{border:1px solid var(--bd);border-radius:6px;padding:1px 6px}.tag.bs{background:var(--warn);color:var(--warnx);border-color:transparent;font-weight:600}
+h2{font-size:17px;line-height:1.3;margin:0 0 10px}.sb{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--bd)}.sb i{display:block}
+.leg{display:flex;justify-content:space-between;font-size:12px;margin-top:5px}.src{margin-top:8px;border:0;background:none;color:var(--tx);text-decoration:underline;padding:0;font-size:13px}
+ul.s{list-style:none;margin:8px 0 0;padding:0;font-size:13px}ul.s li{border-top:1px solid var(--bd);padding:7px 0}ul.s a{color:var(--tx)}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}.b{color:var(--mut)}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;font-size:14px;margin:8px 0}.err{background:var(--warn);color:var(--warnx)}
+</style></head><body><div class="wrap">
+<header><div><h1>Contraste</h1><div class="sub">España y mundo, con el sesgo a la vista</div></div><button class="btn" id="av">🔔 Avisos</button></header>
+<div class="box" id="help" hidden><b>Cómo recibir avisos en el móvil</b><ol style="margin:6px 0 0;padding-left:18px"><li>Instala la app gratuita <b>ntfy</b> (Android o iPhone).</li><li>Pulsa “+” y suscríbete al tema <code id="tp">…</code>.</li><li>Recibirás un aviso cuando una noticia la cubran 3 o más medios, con el reparto de sesgo.</li></ol></div>
+<div class="tabs" id="tabs"></div><div class="bar"><span id="upd">Cargando…</span><button class="btn" id="ref">↻</button></div>
+<div id="err"></div><div id="list"></div>
+<p class="foot">El sesgo de cada medio es una clasificación orientativa y editable (feeds.json), no un juicio sobre su calidad. Compara siempre varias fuentes.</p></div>
+<script>
+var LAB={L:"Izquierda",CL:"Centro-izq.",C:"Centro",CR:"Centro-der.",R:"Derecha",N:"Deportes (no aplica)"},COL={L:"var(--L)",CL:"var(--L)",C:"var(--C)",CR:"var(--R)",R:"var(--R)",N:"var(--C)"},CAT={es:"España",geo:"Geopolítica",eco:"Economía",fut:"Fútbol",eu:"Europa",us:"EEUU"};
+var D=null,tab="all",open={};
+function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML}
+function pct(c){var k={L:0,C:0,R:0},n=0;c.src.forEach(function(s){if(s.b==="N")return;n++;k[s.b[0]==="L"?"L":s.b[0]==="R"?"R":"C"]++});if(!n)return null;return{L:Math.round(k.L/n*100),C:Math.round(k.C/n*100),R:Math.round(k.R/n*100),n:n}}
+function ago(t){var m=Math.max(1,Math.round((Date.now()-t)/6e4));return m<60?"hace "+m+" min":m<1440?"hace "+Math.round(m/60)+" h":"hace "+Math.round(m/1440)+" d"}
+function render(){
+ document.getElementById("tabs").innerHTML=[["all","Todo"],["es","España"],["geo","Geopolítica"],["eco","Economía"],["fut","Fútbol"],["eu","Europa"],["us","EEUU"],["multi","3+ fuentes"],["blind","Puntos ciegos"]].map(function(t){return '<button class="btn'+(tab===t[0]?" on":"")+'" data-t="'+t[0]+'">'+t[1]+"</button>"}).join("");
+ if(!D)return;var h="";
+ D.clusters.filter(function(c){var p=pct(c);return tab==="all"||c.cats.indexOf(tab)>-1||(tab==="multi"&&c.src.length>=3)||(tab==="blind"&&p&&p.n>=3&&(p.L>=75||p.R>=75))}).forEach(function(c){
+  var p=pct(c),bs=p&&p.n>=3&&(p.L>=75||p.R>=75);
+  h+='<div class="card"><div class="meta">'+c.cats.slice(0,2).map(function(k){return '<span class="tag">'+CAT[k]+"</span>"}).join("")+"<span>"+ago(c.t)+"</span><span>· "+c.src.length+(c.src.length===1?" fuente":" fuentes")+"</span>"+(bs?'<span class="tag bs">Punto ciego: casi solo un lado</span>':"")+"</div><h2>"+esc(c.title)+"</h2>";
+  if(p)h+='<div class="sb" role="img" aria-label="Izquierda '+p.L+"%, centro "+p.C+"%, derecha "+p.R+'%"><i style="width:'+p.L+'%;background:var(--L)"></i><i style="width:'+p.C+'%;background:var(--C)"></i><i style="width:'+p.R+'%;background:var(--R)"></i></div><div class="leg"><span><b>Izquierda</b> '+p.L+"%</span><span><b>Centro</b> "+p.C+"%</span><span><b>Derecha</b> "+p.R+"%</span></div>";
+  h+='<button class="src" data-o="'+c.id+'">'+(open[c.id]?"Ocultar fuentes":"Ver fuentes y titulares")+"</button>";
+  if(open[c.id])h+='<ul class="s">'+c.src.map(function(s){return '<li><span class="dot" style="background:'+COL[s.b]+'"></span><b>'+esc(s.n)+'</b> <span class="b">· '+LAB[s.b]+'</span><br><a href="'+esc(s.u)+'" target="_blank" rel="noopener">'+esc(s.h)+"</a></li>"}).join("")+"</ul>";
+  h+="</div>"});
+ document.getElementById("list").innerHTML=h||'<p class="sub">No hay noticias en esta sección.</p>'}
+function load(){fetch("news.json?"+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){D=d;
+ document.getElementById("upd").textContent="Actualizado "+ago(d.updated);document.getElementById("tp").textContent=d.topic||"secreto que configuraste en GitHub";
+ document.getElementById("err").innerHTML=d.errors.length?'<div class="box err">Algunas búsquedas fallaron ('+d.errors.length+"). Las demás siguen funcionando.</div>":"";render()}).catch(function(){document.getElementById("upd").textContent="Sin conexión"})}
+document.addEventListener("click",function(e){var t=e.target.closest("[data-t]"),o=e.target.closest("[data-o]");if(t){tab=t.dataset.t;render()}if(o){open[o.dataset.o]=!open[o.dataset.o];render()}});
+document.getElementById("ref").onclick=load;document.getElementById("av").onclick=function(){var h=document.getElementById("help");h.hidden=!h.hidden};
+document.addEventListener("visibilitychange",function(){if(!document.hidden)load()});setInterval(load,6e4);
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});
+render();load();
+</script></body></html>

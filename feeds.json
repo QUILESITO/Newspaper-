@@ -1,0 +1,12 @@
+[
+ {"topic":"NATION","cat":"es"},
+ {"q":"España política OR sucesos OR sociedad when:1d","cat":"es"},
+ {"topic":"WORLD"},
+ {"q":"guerra OR Ucrania OR Gaza OR Irán OR OTAN OR China OR Rusia OR geopolítica when:1d","cat":"geo"},
+ {"topic":"BUSINESS","cat":"eco"},
+ {"q":"economía OR inflación OR bolsa OR \"Banco Central Europeo\" OR aranceles when:1d","cat":"eco"},
+ {"q":"fútbol when:1d","cat":"fut"},
+ {"q":"LaLiga OR \"Champions League\" OR \"Real Madrid\" OR Barcelona when:1d","cat":"fut"},
+ {"q":"\"Unión Europea\" OR Bruselas OR \"Comisión Europea\" when:1d","cat":"eu"},
+ {"q":"\"Estados Unidos\" OR Trump OR \"Casa Blanca\" when:1d","cat":"us"}
+]
